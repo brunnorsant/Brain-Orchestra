@@ -6,7 +6,7 @@ Este guia monta uma equipe local com instruções e memória. Não instala autom
 
 Abra o checkout numa sessão local do seu agente e peça: **“Leia AGENTS.md e monte minha orquestra com todos os papéis, em uma pasta privada nova.”** O procedimento cria arquivos com `bootstrap.py`, verifica a memória e os papéis e configura terminais somente quando estiver num ambiente Maestri realmente conectado.
 
-O gerador requer Python 3.10 ou superior e usa somente a biblioteca padrão. Antes de escrever, execute `python bootstrap.py --target ../orchestra-workspace --full --dry-run`; para criar, repita sem `--dry-run`. O padrão sem `--full` contém três papéis. Não é necessário fornecer dados pessoais ou credenciais para gerar a estrutura.
+O gerador requer Python 3.10 ou superior e usa somente a biblioteca padrão. Antes de escrever, execute `python bootstrap.py --target ../orchestra-workspace --full --dry-run`; para criar, repita sem `--dry-run`. Depois execute `python bootstrap.py --target ../orchestra-workspace --check`, sem `--full`, para conferir a instalação. O padrão sem `--full` contém três papéis. Não é necessário fornecer dados pessoais ou credenciais para gerar a estrutura.
 
 Reexecutar a mesma configuração preserva os arquivos idênticos. Arquivos alterados ou destino não vazio sem manifesto interrompem o procedimento; escolha outra pasta em vez de sobrescrever trabalho existente.
 
@@ -28,7 +28,7 @@ Em Claude Code, use os controles de diretório e permissões disponíveis na ver
 
 ## 1. Pré-requisitos
 
-- Instale o Maestri pela [página oficial](https://www.themaestri.app/), seguindo as instruções para seu sistema.
+- Para gerar a estrutura e usar um papel por vez em Codex ou Claude Code, Maestri é opcional. Para montar terminais e conexões no canvas, instale-o pela [página oficial](https://www.themaestri.app/), seguindo as instruções para seu sistema.
 - Instale e autentique um agente de código suportado, seguindo a documentação do próprio provedor. A [documentação de terminais do Maestri](https://www.themaestri.app/en/docs/terminals) explica que esses agentes devem estar instalados previamente.
 - Tenha acesso autorizado ao modelo escolhido. Assinaturas, limites e APIs são configurados separadamente; este projeto não fornece créditos ou acesso gratuito.
 - Git é opcional para baixar o material; também é possível usar o ZIP do GitHub.
@@ -51,6 +51,8 @@ Na pasta privada, monte a árvore descrita em [BRAIN.md](BRAIN.md), usando os ex
 Crie um `AGENTS.md` na raiz privada com as instruções comuns dos modelos. Se o agente escolhido exigir `CLAUDE.md`, configure também esse arquivo. O Maestri documenta uma opção de sincronização entre ambos em [Workspaces](https://www.themaestri.app/en/docs/workspaces).
 
 ## 4. Crie um workspace e três terminais
+
+Se quiser começar diretamente no Codex ou Claude Code, abra a pasta privada gerada e peça **“Leia START_HERE.md e faça o primeiro teste com dados fictícios.”** O arquivo contém prompts para produção de três títulos e revisão sequencial, salvando os resultados em `runtime/outputs/`. Esse uso de papéis numa sessão não cria uma equipe em processos separados. As etapas abaixo são a opção com Maestri.
 
 1. Crie um workspace no Maestri apontando para a pasta privada de trabalho.
 2. Crie um terminal com o preset do agente instalado e nomeie-o **Maestro Geral**.
@@ -99,3 +101,5 @@ Antes de considerar a instalação ampliada pronta, demonstre: mensagem real che
 Na pasta do checkout, execute `python -I test_bootstrap.py -v`. Os testes não conectam contas, não chamam modelos e não usam memória privada. Criam destinos temporários novos e verificam também as entradas `AGENTS.md` e `CLAUDE.md`.
 
 Depois de gerar sua pasta privada, confirme a existência de `brain/RECALL.md`, da nota fictícia, dos papéis e dos JSONs. Para os resultados conhecidos e os fluxos ainda não validados com um agente real, consulte [VERIFICACAO.md](VERIFICACAO.md).
+
+Para verificar a estrutura depois de personalizar notas e papéis, execute no checkout `python bootstrap.py --target <PASTA_PRIVADA> --check`. Essa operação é somente de leitura e usa o perfil registrado no manifesto; não combine `--check` com `--full` ou `--dry-run`. Se faltar um arquivo ou houver configuração inválida, ela informa o erro sem alterar a instalação.
