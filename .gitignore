@@ -1,0 +1,16 @@
+# Conteúdo privado não pertence a este pacote público.
+.env
+.env.*
+!.env.example
+brain/
+runtime/
+private/
+credentials/
+*.log
+*.pem
+*.key
+node_modules/
+.venv/
+__pycache__/
+.DS_Store
+Thumbs.db
