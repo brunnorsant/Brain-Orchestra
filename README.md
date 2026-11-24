@@ -26,6 +26,8 @@ flowchart TD
     E <--> C[Orchestra Brain: contexto sob demanda]
     DEV <--> C
     O <--> C
+    O --> G[Operations Brain: tarefas, identidade e verificações]
+    T --> G
     E --> A[Adaptadores de ferramentas por função]
     A --> I[Instagram: Distribuição e Publicação]
     A --> X[Agenda, e-mail, arquivos e outras APIs]
@@ -73,6 +75,12 @@ Em vez de inserir toda a memória em toda mensagem, mantenha conhecimento em arq
 Isso pode reduzir contexto repetido e uso desnecessário de tokens. Não elimina o custo das instruções, das ferramentas, da recuperação ou dos vários agentes; não há economia percentual garantida. Compare tarefas equivalentes e meça tokens de entrada, saída, chamadas e qualidade do resultado.
 
 O cérebro não é o processo de um agente nem uma fila de trabalho. Ele armazena conhecimento durável; o runtime armazena pedidos, estados, locks e resultados temporários.
+
+## Origem e evolução da memória
+
+A base conceitual vem do [Cérebro Claude, de Josh / joshazze](https://github.com/joshazze/cerebro-claude). O Brain Orchestra adapta essa abordagem para um acervo privado sincronizado pelo Google Drive, acessível por diferentes dispositivos e por Codex, Antigravity e Claude Code. Soma a essa memória uma orquestra de especialistas e uma camada de governança operacional.
+
+Leia [TEORIA-MEMORIA.md](TEORIA-MEMORIA.md) para entender o mecanismo de contexto seletivo, as adaptações e a montagem entre dispositivos. [INFRAESTRUTURA.md](INFRAESTRUTURA.md) descreve o Operations Brain: identidade, tarefas, branches, verificações, locks, validação e transferência de trabalho. Esses guias não publicam dados de uma instalação real nem equivalem a serviços de sincronização ou governança já instalados pelo gerador.
 
 ## Um fluxo de exemplo
 
