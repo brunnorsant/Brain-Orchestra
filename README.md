@@ -99,6 +99,8 @@ Abra este repositório em uma sessão local do Claude Code ou Codex e peça:
 
 O agente encontra o procedimento em `AGENTS.md` (ou pela entrada `CLAUDE.md`), executa `bootstrap.py` e verifica o resultado. Isso depende de acesso local de escrita e Python 3.10 ou superior. Uma conversa web com acesso somente de leitura ao GitHub não consegue criar arquivos no seu computador.
 
+O destino privado fica fora do checkout. Abra no agente uma pasta contêiner que contenha o checkout e o destino privado, ou autorize explicitamente somente o diretório de destino adicional. Veja o passo a passo e as alternativas em [INSTALACAO.md](INSTALACAO.md). Não é necessário desativar o sandbox nem fornecer dados de outra instalação.
+
 Para gerar manualmente todos os papéis:
 
 ```sh
@@ -111,6 +113,14 @@ O destino deve ficar fora do checkout público. Sem `--full`, o gerador prepara 
 Leia [INSTALACAO.md](INSTALACAO.md) para montar o núcleo no Maestri, [BRAIN.md](BRAIN.md) para criar memória própria e [INTEGRACOES.md](INTEGRACOES.md) para projetar Discord e APIs por função. [MODELOS.md](MODELOS.md) contém instruções e contratos genéricos para copiar.
 
 Comece com três agentes: Maestro, executor e revisor. Amplie quando existir uma entrega recorrente que justifique outra função.
+
+## Verificação reproduzível
+
+```sh
+python -I test_bootstrap.py -v
+```
+
+Os testes geram pastas temporárias com padrões fictícios e verificam criação, referências, reexecução e proteção de arquivos. Leia [VERIFICACAO.md](VERIFICACAO.md) para os resultados e limites: testar o gerador não comprova uma sessão completa de instalação em cada produto de IA.
 
 ## Escopo e contribuição
 
