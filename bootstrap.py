@@ -2,8 +2,9 @@
 """Generate a fresh private Orchestra workspace using only synthetic defaults."""
 import argparse
 import json
+import re
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 AGENTS = [
     ('maestro', 'Maestro Geral', 'Maestro geral', 'Triar, delegar, acompanhar e consolidar; especialistas executam.'),
@@ -30,6 +31,8 @@ CORE = {'maestro', 'carrosseis', 'revisao'}
 PROTOCOL = '''# Orchestra Brain — protocolo comum
 
 - Leia brain/RECALL.md e somente as notas relevantes ao pedido.
+- Para usar um papel nesta sessão, consulte roles/README.md e leia somente o arquivo da função escolhida.
+- Sem outros agentes conectados, não simule delegação: use o papel solicitado em uma sessão e diferencie revisão sequencial de colaboração entre processos.
 - Estes arquivos definem papéis; não comprovam agentes ativos ou contas conectadas.
 - O Maestro coordena; o especialista executa e devolve autoria e evidência.
 - Cada tarefa tem um responsável principal. Evite edições concorrentes.
@@ -51,6 +54,40 @@ def make_files(full):
     files = {
         'AGENTS.md': PROTOCOL,
         'CLAUDE.md': 'Leia e siga AGENTS.md nesta pasta. Consulte o índice antes das notas.\n',
+        'START_HERE.md': '''# Comece aqui
+
+Abra esta pasta privada no Codex ou Claude Code. Não é necessário ter Maestri
+para ler a memória e usar um papel por vez. Contas e ferramentas externas não
+estão conectadas por esta instalação.
+
+## Primeiro teste sem dados pessoais
+
+Peça à IA:
+
+> Leia AGENTS.md, brain/RECALL.md e roles/carrosseis.md. Atue no papel de
+> Produção de Carrosséis e crie três títulos sobre organização de arquivos,
+> usando somente a nota fictícia indicada pelo índice. Salve em
+> runtime/outputs/demo.md. Não publique nada.
+
+Depois peça:
+
+> Leia roles/revisao.md e runtime/outputs/demo.md. Revise os três títulos
+> e salve o resultado em runtime/outputs/review.md. Informe que se trata
+> de uma revisão sequencial nesta sessão, sem afirmar que outro processo
+> ou agente independente foi iniciado.
+
+## Outros papéis
+
+Consulte roles/README.md para escolher a função e seu arquivo. O Maestro
+coordena quando existem executores reais; a lista de arquivos não cria
+terminais. Maestri é uma opção para montar a equipe em processos separados.
+
+## Verificar os arquivos depois de personalizar
+
+No checkout público, execute o gerador com --target apontando para esta
+pasta privada e --check. Essa verificação não reescreve suas notas ou papéis.
+Não publique esta pasta nem forneça credenciais para executar o teste.
+''',
         '.gitignore': '*\n',
         'brain/RECALL.md': '# RECALL\n\n- Regras: 01 Base/regras.md\n- Projeto fictício: 02 Projetos/exemplo.md\n- Papéis: ../roles/README.md\n',
         'brain/01 Base/regras.md': PROTOCOL,
@@ -95,7 +132,7 @@ def generate(target, full=False, dry_run=False):
         if not manifest.is_file() or manifest.is_symlink():
             raise ValueError('Destino não vazio sem manifesto do gerador; nada foi alterado.')
         current = json.loads(manifest.read_text(encoding='utf-8'))
-        if current.get('generator') != 'brain-orchestra-v1' or current.get('profile') != ('full' if full else 'core'):
+        if not isinstance(current, dict) or current.get('generator') != 'brain-orchestra-v1' or current.get('profile') != ('full' if full else 'core'):
             raise ValueError('Destino pertence a outra configuração; use uma pasta nova.')
     # Preflight all files before the first write, including symlinked parents.
     for name, content in files.items():
@@ -116,14 +153,74 @@ def generate(target, full=False, dry_run=False):
             'external_accounts_connected': False, 'terminals_started': False}
 
 
+def check_workspace(target):
+    """Read declared installation files without regenerating customized content."""
+    target = Path(target).expanduser().resolve()
+
+    def installed_file(name):
+        if not isinstance(name, str) or not name or '\\' in name or ':' in name:
+            raise ValueError('Caminho inválido no manifesto.')
+        relative = PurePosixPath(name)
+        if relative.is_absolute() or any(part in ('.', '..') for part in relative.parts):
+            raise ValueError('Caminho fora da instalação no manifesto.')
+        path = target / name
+        if path.resolve() != path or path.is_symlink():
+            raise ValueError('Link simbólico em arquivo da instalação.')
+        if not path.is_file():
+            raise ValueError(f'Arquivo da instalação ausente: {name}')
+        return path
+
+    manifest = json.loads(installed_file('setup-manifest.json').read_text(encoding='utf-8'))
+    if not isinstance(manifest, dict) or manifest.get('generator') != 'brain-orchestra-v1':
+        raise ValueError('Manifesto de instalação não reconhecido.')
+    names, agents = manifest.get('files'), manifest.get('agents')
+    if not isinstance(names, list) or not names or not all(isinstance(n, str) for n in names):
+        raise ValueError('Lista de arquivos inválida no manifesto.')
+    if len(set(names)) != len(names):
+        raise ValueError('Lista de arquivos duplicados no manifesto.')
+    if not isinstance(agents, list) or not agents or not all(
+        isinstance(a, str) and re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*', a) for a in agents
+    ) or len(set(agents)) != len(agents):
+        raise ValueError('Lista de papéis inválida no manifesto.')
+    if manifest.get('profile') not in ('core', 'full'):
+        raise ValueError('Perfil inválido no manifesto.')
+    for name in names:
+        installed_file(name)
+    required = ['AGENTS.md', 'CLAUDE.md', 'brain/RECALL.md', 'roles/README.md']
+    required += [f'roles/{agent}.md' for agent in agents]
+    for name in required:
+        if not installed_file(name).read_text(encoding='utf-8').strip():
+            raise ValueError(f'Arquivo de instruções vazio: {name}')
+    routes = json.loads(installed_file('config/routes.example.json').read_text(encoding='utf-8'))
+    if not isinstance(routes, dict) or not isinstance(routes.get('enabled'), bool) or not isinstance(routes.get('routes'), list):
+        raise ValueError('Configuração de rotas inválida.')
+    for route in routes['routes']:
+        if not isinstance(route, dict) or route.get('agent_id') not in agents:
+            raise ValueError('Rota aponta para um papel inexistente.')
+    integrations = json.loads(installed_file('config/integrations.example.json').read_text(encoding='utf-8'))
+    if not isinstance(integrations, dict) or not integrations or not all(
+        isinstance(value, dict) and isinstance(value.get('enabled'), bool)
+        for value in integrations.values()
+    ):
+        raise ValueError('Configuração de integrações inválida.')
+    return {'mode': 'checked', 'profile': manifest['profile'], 'agents': len(agents),
+            'files': len(names) + 1, 'customizations_preserved': True,
+            'runtime_status': 'not_verified', 'integrations_status': 'not_verified'}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--target', required=True, help='Pasta privada fora do checkout público')
     parser.add_argument('--full', action='store_true', help='Gerar todos os 18 papéis; padrão: núcleo de 3')
-    parser.add_argument('--dry-run', action='store_true', help='Validar sem escrever arquivos')
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument('--dry-run', action='store_true', help='Validar sem escrever arquivos')
+    mode.add_argument('--check', action='store_true', help='Verificar a instalação existente sem sobrescrever personalizações')
     args = parser.parse_args()
+    if args.check and args.full:
+        parser.error('--check lê o perfil do manifesto; não use --full nessa verificação.')
     try:
-        print(encoded_json(generate(args.target, args.full, args.dry_run)), end='')
+        result = check_workspace(args.target) if args.check else generate(args.target, args.full, args.dry_run)
+        print(encoded_json(result), end='')
     except (ValueError, OSError) as error:
         print(f'Setup interrompido: {error}', file=sys.stderr)
         return 1
