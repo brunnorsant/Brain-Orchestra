@@ -72,6 +72,8 @@ Adicione os demais papéis da tabela do README conforme a necessidade. Para cont
 
 ## 8. Integre canais e ferramentas
 
+Para usar o cérebro em vários dispositivos pelo Google Drive e configurar sua leitura no Codex, Claude Code ou Antigravity, siga [TEORIA-MEMORIA.md](TEORIA-MEMORIA.md). Essa etapa é opcional e manual; mantenha runtime e coordenação fora da sincronização de notas. O modelo de governança da equipe está em [INFRAESTRUTURA.md](INFRAESTRUTURA.md).
+
 Siga [INTEGRACOES.md](INTEGRACOES.md). O núcleo local funciona por interação com os terminais; a ponte Discord e os adaptadores de API são uma fase adicional de implementação, não estão incluídos como executáveis neste pacote.
 
 Antes de considerar a instalação ampliada pronta, demonstre: mensagem real chegando ao agente certo, retorno no canal de origem, leitura de memória relevante, revisão, falha visível e nenhuma duplicação após reconexão.
