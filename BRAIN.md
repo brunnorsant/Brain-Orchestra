@@ -2,6 +2,8 @@
 
 Orchestra Brain é um padrão de organização de conhecimento em Markdown. Cada instalação cria seu próprio cérebro privado. Um editor de texto basta; ferramentas de notas e busca podem ser adicionadas depois.
 
+A origem conceitual e a evolução para vários dispositivos e ferramentas estão em [TEORIA-MEMORIA.md](TEORIA-MEMORIA.md), com crédito ao projeto de Josh. Para separar conhecimento de identidade, tarefas, permissões e execução, consulte [INFRAESTRUTURA.md](INFRAESTRUTURA.md).
+
 ## Estrutura sugerida
 
 Crie esta árvore na pasta privada de trabalho, fora do checkout público:
