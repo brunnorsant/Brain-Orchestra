@@ -35,22 +35,23 @@ class BootstrapAcceptance(unittest.TestCase):
         return {p.relative_to(self.target).as_posix(): (p.read_bytes(), p.stat().st_mtime_ns)
                 for p in self.target.rglob('*') if p.is_file()}
 
-    def test_full_cli_creates_18_roles_and_34_files(self):
+    def test_full_cli_creates_18_roles_and_35_files(self):
         run = self.cli('--target', self.target, '--full')
         self.assertEqual(run.returncode, 0, run.stderr)
         result = json.loads(run.stdout)
-        self.assertEqual((result['agents'], result['files']), (18, 34))
+        self.assertEqual((result['agents'], result['files']), (18, 35))
         self.assertFalse(result['external_accounts_connected'])
         self.assertFalse(result['terminals_started'])
         roles = [p for p in (self.target / 'roles').glob('*.md') if p.name != 'README.md']
         self.assertEqual(len(roles), 18)
-        self.assertEqual(len(self.snapshot()), 34)
+        self.assertEqual(len(self.snapshot()), 35)
+        self.assertTrue((self.target / 'START_HERE.md').is_file())
 
     def test_core_cli_creates_three_roles(self):
         run = self.cli('--target', self.target)
         self.assertEqual(run.returncode, 0, run.stderr)
         result = json.loads(run.stdout)
-        self.assertEqual((result['agents'], result['files']), (3, 19))
+        self.assertEqual((result['agents'], result['files']), (3, 20))
         manifest = json.loads((self.target / 'setup-manifest.json').read_text(encoding='utf-8'))
         self.assertEqual(set(manifest['agents']), {'maestro', 'carrosseis', 'revisao'})
 
@@ -168,6 +169,76 @@ class BootstrapAcceptance(unittest.TestCase):
                 text = path.read_text(encoding='utf-8')
                 self.assertNotIn(str(self.target), text)
                 self.assertNotRegex(text, r'(?i)\b[a-z]:[\\/]|/(?:Users|home)/|[\w.+-]+@[\w.-]+\.[a-z]{2,}')
+
+    def test_non_object_manifest_is_a_controlled_error(self):
+        bootstrap.generate(self.target)
+        (self.target / 'setup-manifest.json').write_text('[]', encoding='utf-8')
+        before = self.snapshot()
+        for flags in ((), ('--check',)):
+            run = self.cli('--target', self.target, *flags)
+            self.assertEqual(run.returncode, 1)
+            self.assertIn('Setup interrompido:', run.stderr)
+            self.assertNotIn('Traceback', run.stderr)
+        self.assertEqual(before, self.snapshot())
+
+    def test_check_reads_core_and_full_profile_without_full_flag(self):
+        for full in (False, True):
+            target = self.base / ('full' if full else 'core')
+            bootstrap.generate(target, full=full)
+            run = self.cli('--target', target, '--check')
+            self.assertEqual(run.returncode, 0, run.stderr)
+            result = json.loads(run.stdout)
+            self.assertEqual(result['agents'], 18 if full else 3)
+            self.assertEqual(result['mode'], 'checked')
+            self.assertEqual(result['runtime_status'], 'not_verified')
+
+    def test_check_preserves_customized_notes_and_roles(self):
+        bootstrap.generate(self.target, full=True)
+        (self.target / 'roles' / 'maestro.md').write_text('Customized synthetic instructions', encoding='utf-8')
+        (self.target / 'brain' / '02 Projetos' / 'exemplo.md').write_text('Synthetic project update', encoding='utf-8')
+        before = self.snapshot()
+        run = self.cli('--target', self.target, '--check')
+        self.assertEqual(run.returncode, 0, run.stderr)
+        self.assertEqual(before, self.snapshot())
+
+    def test_check_reports_missing_file_without_recreating_it(self):
+        bootstrap.generate(self.target)
+        (self.target / 'roles' / 'maestro.md').unlink()
+        before = self.snapshot()
+        run = self.cli('--target', self.target, '--check')
+        self.assertEqual(run.returncode, 1)
+        self.assertIn('ausente', run.stderr)
+        self.assertEqual(before, self.snapshot())
+
+    def test_check_rejects_invalid_routes_without_mutation(self):
+        bootstrap.generate(self.target)
+        path = self.target / 'config' / 'routes.example.json'
+        path.write_text('{"enabled": false, "routes": [{"agent_id": "nonexistent"}]}', encoding='utf-8')
+        before = self.snapshot()
+        run = self.cli('--target', self.target, '--check')
+        self.assertEqual(run.returncode, 1)
+        self.assertEqual(before, self.snapshot())
+
+    def test_check_rejects_manifest_path_outside_workspace(self):
+        bootstrap.generate(self.target)
+        path = self.target / 'setup-manifest.json'
+        manifest = json.loads(path.read_text(encoding='utf-8'))
+        manifest['files'].append('../outside.txt')
+        path.write_text(json.dumps(manifest), encoding='utf-8')
+        run = self.cli('--target', self.target, '--check')
+        self.assertEqual(run.returncode, 1)
+        self.assertIn('fora da instalação', run.stderr)
+
+    def test_check_rejects_conflicting_modes(self):
+        bootstrap.generate(self.target)
+        for flags in (('--check', '--dry-run'), ('--check', '--full')):
+            run = self.cli('--target', self.target, *flags)
+            self.assertEqual(run.returncode, 2)
+
+    def test_check_rejects_missing_installation_without_creation(self):
+        run = self.cli('--target', self.target, '--check')
+        self.assertEqual(run.returncode, 1)
+        self.assertFalse(self.target.exists())
 
     def test_public_documentation_local_links_exist(self):
         for path in REPO.glob('*.md'):
