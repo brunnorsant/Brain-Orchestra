@@ -4,7 +4,7 @@ Data: 24/11/2026.
 
 ## Conclusão e alcance
 
-O gerador foi executado a partir de um clone novo obtido pelo endereço público, sem autenticação Git, memória privada, arquivo de ambiente ou dados de uma instalação existente. Ele montou estruturas novas com os padrões fictícios publicados. Os 17 testes de aceitação passaram em Windows com Python 3.13.
+O gerador foi executado a partir de um clone novo obtido pelo endereço público, sem autenticação Git, memória privada, arquivo de ambiente ou dados de uma instalação existente. Ele montou estruturas novas com os padrões fictícios publicados. Após as correções de instalação e verificação, os 25 testes de aceitação passaram em Windows com Python 3.13.
 
 Isso valida a geração local e a consistência dos arquivos. Não equivale a aprovar o fluxo completo de um agente novo em Codex e Claude Code: o teste separado do Codex encontrou uma restrição do ambiente de execução, e Claude Code não estava instalado no ambiente de teste.
 
@@ -20,8 +20,8 @@ A suíte usa apenas a biblioteca padrão, pastas temporárias e subprocessos Pyt
 
 | Verificação | Resultado |
 | --- | --- |
-| Gerador completo por linha de comando | 18 papéis e 34 arquivos criados |
-| Perfil mínimo por linha de comando | 3 papéis e 19 arquivos criados |
+| Gerador completo por linha de comando | 18 papéis e 35 arquivos criados, incluindo START_HERE.md |
+| Perfil mínimo por linha de comando | 3 papéis e 20 arquivos criados |
 | Simulação `--dry-run` | Não cria o destino |
 | Caminho com espaços e acentos | Estrutura criada e índice legível |
 | Reexecução idêntica | Conteúdo e datas de modificação preservados |
@@ -36,6 +36,17 @@ A suíte usa apenas a biblioteca padrão, pastas temporárias e subprocessos Pyt
 | Entradas Codex/Claude e referências de memória/papéis | Arquivos referenciados presentes |
 | Arquivos gerados | Sem caminhos do host ou endereços de contato |
 | Links locais dos documentos públicos | Destinos existentes |
+| `--check` nos dois perfis | Verificação somente de leitura, sem iniciar runtime |
+| `--check` após personalização | Notas e papéis preservados |
+| Arquivo ausente, rota inválida ou manifesto inconsistente | Erro controlado, sem recriar ou sobrescrever arquivos |
+| Caminho fora da instalação no manifesto | Recusado antes de ler o arquivo apontado |
+| Combinações conflitantes de opções | Recusadas com mensagem de uso |
+
+## Correções aplicadas
+
+O gerador agora cria `START_HERE.md` com um primeiro uso direto dos papéis em Codex ou Claude Code. Maestri deixou de aparecer como requisito para gerar arquivos e usar papéis sequencialmente; continua sendo uma opção para montar a equipe em processos separados.
+
+Adicionado `--check` para verificar uma instalação existente sem comparar suas notas e instruções com o conteúdo inicial. Assim, uma personalização válida não é tratada como algo a sobrescrever. Manifestos que não são objetos JSON agora geram um erro controlado em vez de um traceback.
 
 ## Teste com agente e limitações observadas
 

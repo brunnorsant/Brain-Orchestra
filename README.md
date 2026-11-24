@@ -106,9 +106,14 @@ Para gerar manualmente todos os papéis:
 ```sh
 python bootstrap.py --target ../orchestra-workspace --full --dry-run
 python bootstrap.py --target ../orchestra-workspace --full
+python bootstrap.py --target ../orchestra-workspace --check
 ```
 
 O destino deve ficar fora do checkout público. Sem `--full`, o gerador prepara apenas o núcleo de três papéis. Ele não sobrescreve arquivos modificados e permite verificar novamente uma instalação idêntica. Python não é necessário depois para ler os modelos.
+
+O comando `--check` valida os arquivos e as configurações declarados sem restaurar padrões nem sobrescrever suas personalizações. Ele não verifica se modelos, terminais ou contas estão conectados.
+
+Depois, abra a pasta privada `orchestra-workspace` no Codex ou Claude Code e peça **“Leia START_HERE.md e faça o primeiro teste com dados fictícios.”** O guia gerado ensina a usar um papel por vez e revisar o resultado. Maestri é opcional para esse uso; é necessário configurá-lo separadamente se quiser terminais e colaboração reais entre processos.
 
 Leia [INSTALACAO.md](INSTALACAO.md) para montar o núcleo no Maestri, [BRAIN.md](BRAIN.md) para criar memória própria e [INTEGRACOES.md](INTEGRACOES.md) para projetar Discord e APIs por função. [MODELOS.md](MODELOS.md) contém instruções e contratos genéricos para copiar.
 
