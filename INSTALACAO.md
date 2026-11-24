@@ -10,6 +10,22 @@ O gerador requer Python 3.10 ou superior e usa somente a biblioteca padrão. Ant
 
 Reexecutar a mesma configuração preserva os arquivos idênticos. Arquivos alterados ou destino não vazio sem manifesto interrompem o procedimento; escolha outra pasta em vez de sobrescrever trabalho existente.
 
+### Permissões do workspace
+
+O cérebro fica fora do checkout público. Por isso, abrir somente o checkout em uma ferramenta com escrita limitada ao workspace pode impedir a criação do destino irmão. Um ponto de partida simples é:
+
+```text
+orchestra-lab/                 ← pasta aberta na ferramenta de IA
+  repo/                       ← checkout público
+  orchestra-workspace/        ← destino privado criado pelo gerador
+```
+
+Peça ao agente: **“Leia repo/AGENTS.md, trabalhe a partir de repo e crie a estrutura completa em ../orchestra-workspace, usando somente os exemplos publicados. Não configure contas.”**
+
+Alternativamente, mantenha o checkout aberto e conceda acesso de escrita apenas ao destino privado pelos controles da ferramenta. No Codex CLI, `--add-dir` adiciona um diretório ao escopo de escrita; o modo da sessão também precisa permitir escrita e execução. Consulte a [referência oficial de comandos](https://learn.chatgpt.com/docs/developer-commands) e a [documentação de sandbox](https://learn.chatgpt.com/docs/sandboxing?surface=cli).
+
+Em Claude Code, use os controles de diretório e permissões disponíveis na versão instalada. Se o ambiente recusar leitura, execução ou escrita, a instalação ainda não aconteceu: registre o bloqueio e ajuste o workspace autorizado. Não contorne a rejeição desativando proteções.
+
 ## 1. Pré-requisitos
 
 - Instale o Maestri pela [página oficial](https://www.themaestri.app/), seguindo as instruções para seu sistema.
@@ -77,3 +93,9 @@ Para usar o cérebro em vários dispositivos pelo Google Drive e configurar sua 
 Siga [INTEGRACOES.md](INTEGRACOES.md). O núcleo local funciona por interação com os terminais; a ponte Discord e os adaptadores de API são uma fase adicional de implementação, não estão incluídos como executáveis neste pacote.
 
 Antes de considerar a instalação ampliada pronta, demonstre: mensagem real chegando ao agente certo, retorno no canal de origem, leitura de memória relevante, revisão, falha visível e nenhuma duplicação após reconexão.
+
+## Verifique a instalação mínima
+
+Na pasta do checkout, execute `python -I test_bootstrap.py -v`. Os testes não conectam contas, não chamam modelos e não usam memória privada. Criam destinos temporários novos e verificam também as entradas `AGENTS.md` e `CLAUDE.md`.
+
+Depois de gerar sua pasta privada, confirme a existência de `brain/RECALL.md`, da nota fictícia, dos papéis e dos JSONs. Para os resultados conhecidos e os fluxos ainda não validados com um agente real, consulte [VERIFICACAO.md](VERIFICACAO.md).
